@@ -1,0 +1,249 @@
+%
+% This is the LaTeX template file for lecture notes for CS294-8,
+% Computational Biology for Computer Scientists.  When preparing 
+% LaTeX notes for this class, please use this template.
+%
+% To familiarize yourself with this template, the body contains
+% some examples of its use.  Look them over.  Then you can
+% run LaTeX on this file.  After you have LaTeXed this file then
+% you can look over the result either by printing it out with
+% dvips or using xdvi.
+%
+% This template is based on the template for Prof. Sinclair's CS 270.
+
+\documentclass[11pt, twosides]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{graphics}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{xcolor}
+\setlength{\oddsidemargin}{0.25 in}
+\setlength{\evensidemargin}{-0.25 in}
+\setlength{\topmargin}{-0.6 in}
+\setlength{\textwidth}{6.5 in}
+\setlength{\textheight}{8.5 in}
+\setlength{\headsep}{0.75 in}
+\setlength{\parindent}{0 in}
+\setlength{\parskip}{0.1 in}
+
+%
+% The following commands set up the lecnum (lecture number)
+% counter and make various numbering schemes work relative
+% to the lecture number.
+%
+\newcounter{lecnum}
+\renewcommand{\thepage}{\thelecnum-\arabic{page}}
+\renewcommand{\thesection}{\thelecnum.\arabic{section}}
+\renewcommand{\theequation}{\thelecnum.\arabic{equation}}
+\renewcommand{\thefigure}{\thelecnum.\arabic{figure}}
+\renewcommand{\thetable}{\thelecnum.\arabic{table}}
+
+%
+% The following macro is used to generate the header.
+%
+\newcommand{\lecture}[4]{
+%   \pagestyle{myheadings}
+   \thispagestyle{plain}
+   \newpage
+   \setcounter{lecnum}{#1}
+   \setcounter{page}{1}
+   \noindent
+   \begin{center}
+   \framebox{
+      \vbox{\vspace{2mm}
+    \hbox to 6.28in { {\bf CS 419M Introduction to Machine Learning
+                        \hfill Spring 2021-22} }
+       \vspace{4mm}
+       \hbox to 6.28in { {\Large \hfill Lecture #1: #2  \hfill} }
+       \vspace{2mm}
+       \hbox to 6.28in { {\it Lecturer: #3 \hfill Scribe: #4} }
+      \vspace{2mm}}
+   }
+   \end{center}
+   \markboth{Lecture #1: #2}{Lecture #1: #2}
+}
+
+%
+% Convention for citations is authors' initials followed by the year.
+% For example, to cite a paper by Leighton and Maggs you would type
+% \cite{LM89}, and to cite a paper by Strassen you would type \cite{S69}.
+% (To avoid bibliography problems, for now we redefine the \cite command.)
+% Also commands that create a suitable format for the reference list.
+% \renewcommand{\cite}[1]{[#1]}
+% \def\beginrefs{\begin{list}%
+%         {[\arabic{equation}]}{\usecounter{equation}
+%          \setlength{\leftmargin}{2.0truecm}\setlength{\labelsep}{0.4truecm}%
+%          \setlength{\labelwidth}{1.6truecm}}}
+% \def\endrefs{\end{list}}
+% \def\bibentry#1{\item[\hbox{[#1]}]}
+
+%Use this command for a figure; it puts a figure in wherever you want it.
+%usage: \fig{NUMBER}{SPACE-IN-INCHES}{CAPTION}
+% \newcommand{\fig}[3]{
+% 			\vspace{#2}
+% 			\begin{center}
+% 			Figure \thelecnum.#1:~#3
+% 			\end{center}
+% 	}
+% Use these for theorems, lemmas, proofs, etc.
+\newtheorem{theorem}{Theorem}[lecnum]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+% \newenvironment{proof}{{\bf Proof:}}{\hfill\rule{2mm}{2mm}}
+
+% **** IF YOU WANT TO DEFINE ADDITIONAL MACROS FOR YOURSELF, PUT THEM HERE:
+
+\begin{document}
+%FILL IN THE RIGHT INFO.
+\lecture{4}{Evaluation protocol and Ranking losses }{Abir De}{Group 2}
+%\lecture{4}{TBD}
+%\lecture{x}{Title}{Abir De}{Group 2}
+
+\section{Basic machine learning evaluation protocol}
+
+Suppose we have dataset with n items, $D = \{1,2, \dots, n\}$, where the $i^{th}$ element has the feature $x_i$. We wish to create a classifier with the linear map, $w^\top x = y$, given the label $y$ where it is assumed to be a continuous quantity. While for the discrete label case, $y \in \{-1,1\}$, we take the map to be $sign(w^\top x)$.
+
+\subsection{Problem Description}
+We are given a training data-set $\{(x_1, y_1), (x_2, y_2), \dots, (x_n, y_n)\}$. Our objective is find a relation or map between $x_i$ and $y_i$ where $i \in \{1,2,\dots, n\}$. Most importantly, this model must work well on general unseen data too. 
+
+\subsection{Evaluation metric}
+
+It is important to choose the following:
+\begin{itemize}
+    \item Model (like linear, exponential etc.)
+    \item Loss function (like logistic loss, hinge loss, etc.)
+\end{itemize}
+before building a map for the classifier problem. Difference choice of the above two will give us different maps. It should be noted that we can optimize for the parameters of the model that we choose, but we can't optimize the loss function keeping the model itself as the argument. 
+
+Since both the model and the loss function vary, we cannot minimize the overall performance with respect to the set of models and the set of loss functions. What is instead done is the following.
+
+Take the optimization problem as:
+\[\min_{w_m} \sum_{i\in D} l(x_i, y_i, m)\]
+where, $w_m$ is the parameter of the model $m$ and $l$ is the loss function. \textbf{Here $l$ and $m$ are kept fixed}. We then find the accuracy of this model using some accuracy function $acc(m, l)$ for various $m$ and $l$ choices, which is applied on the validation data-set (introduced ahead). 
+The $m$ and $l$ which give the best accuracy is chosen.
+
+\subsection{Validation set}
+
+
+We define part of our dataset as a validation set, on which we measure the accuracy of our model during training-
+
+D: $D_{Tr}$(on which we fix a model loss function)$\xrightarrow{m}$$D_v$$\xrightarrow$ accuracy  
+
+What exactly is accuracy?
+
+Accuracy can be defined for a validation set in different ways according to the type of model and problem we have. If it is a regression problem, accuracy is usually defined as $E(|y-m(x)|)$ or $E((y-m(x))^{2})$.
+In a classification problem, accuracy is dependant on how small $E[I[m(x)\neq y]]$ is if $y\in \{+1,-1\}$.
+
+Given a dataset and a machine learning task, we have to fix the (a) Model which we will use, and (b) the loss function we use for this task.
+
+We split our dataset D into a training dataset $D_{Tr}$ and a validation dataset $D_v$.
+
+\begin{itemize}
+    \item We train different models on $D_{Tr}$
+    \item Measure accuracy on validation set $D_{v}$
+    \item Fix model/loss so that accuracy is maximized on $D_{v}$
+\end{itemize}
+
+Note: Loss and accuracy are different. Loss is just an approximation of the accuracy, and accuracy is the actual measure of our model's effectiveness.
+
+\subsection{Need for Ranking loss}
+
+Assume that we have vectors $x_{1}$ to $x_{n}$
+
+Our job is to rank these vectors in some order, i.e. to find a permutation of these vectors representing their ranking.
+
+$\{x_1,x_2....x_n\}$$\xrightarrow$$\Pi$(permutation of $x_1$ to $x_n$)$\xrightarrow$sorted\ vectors
+
+For example, when Google displays search results, It needs to sort the importance order of web pages in response to a query. Thus ranking loss is required here. This can be done by tracking the time users spend on a web page in response to a query before checking other search results. The mouse pointer of computers is also tracked, hence it can be known which web pages links the user finds most interesting when all the search results are shown. This information is used to further fine- tune the parameters of the ranking model.
+
+$\Delta D\xrightarrow{\Delta x_i(new\ user\ information)} w -\epsilon$ (change in final parameters of model)
+
+$\epsilon$ here is inversely proportional to $\mid D\mid$.
+
+We are given $x_i$ and $x_j$ and their relevance scores $y_i$ and $y_j$.
+If  $y_i>y_j$, we rank $x_i$ higher than $x_j$, else we rank $x_j$ higher.
+
+Thus we need a function h such that given $x_i>x_j$, we should have $h(x_i)>h(x_j)$.
+$h(x_i)$ and $h(x_j)$ should be a good enough approximation for the given $y_i$ and $y_j$, which are called the relevance scores.
+
+We try to approximate h(x) as $W^Tx$, and try to find a $W$ which predicts the relevance scores in the best possible way.
+
+\subsection{Pairwise Ranking loss}
+Consider the above example where we need to rank ${({x_i}, {x_j})}$, we want $h(x_i)>h(x_j)$ should mimic ${y_i}>{y_j}$, and we need to define loss function accordingly.
+
+One way to define could be
+	\[\sum\limits_{\begin{smallmatrix} 
+ i,j \in{ D} \\ 
+ {i}>{j} 
+\end{smallmatrix}}^{{}}{\left[ \Iota \Iota \left( e^{-(h({x_i})-h({x_j}))({y_i}-{y_j})} \right) \right]}\]
+
+Better way to define would be using Pairwise Ranking loss
+	\[\sum\limits_{\begin{smallmatrix} 
+ i,j \in{ D}
+\end{smallmatrix}}^{{}}{\left[1- \Iota \Iota \left( sign({y_i}-{y_j})(h({x_i})-h({x_j})) \right) \right]}\]
+
+Here, we could have put sign function on whole function but then it will be very difficult to train such model as we might not be able to find h using any sensible algorithm
+\subsection{What if we try regression loss?}
+Let us assume ${y_i} \in {[0,1]}$, and for simplicity let ${y_i}=i*0.1$ and there be total 10 {y_i}s.
+
+Regression loss can be then defined as $\sum[({y_i} - {W^T}{x_i})^2]$
+
+Now even if overall loss is low but change in small fraction in some of the values will not affect the error, but it can jeopardise the overall ranking, specifically where there is small change. The pairwise Ranking loss gives us the benefit as even for small perturbations, the difference will cancel out and it will not affect the overall ranking.
+
+These ranking errors can be very significant. For example, as discussed in Google Search example, if ordering error occurs at ${100^{th}}$ position, it doesn't matter, but if it occurs at the top, it will significantly affect the utility and quality of search. That's why, while evaluating the ranking order, we can use matrix which penalises mismatching at top place compared to bottom.    
+
+\subsection{Significance of considering every comparison while ranking}
+While computing ranking pairwise loss, comparing every distinct pair of items is necessary. That is, for every $i,j\in D$, loss is computed for every $i\ne j$. For instance, for three items ${{x}_{1}},{{x}_{2}},{{x}_{3}}$, if ${{x}_{1}}>{{x}_{2}}$ and ${{x}_{2}}>{{x}_{3}}$, even though it is pretty evident that ${{x}_{1}}>{{x}_{3}}$ without theoretically comparing the two items, practically they need to be compared while ranking. This is because while training, there is no guarantee that the first two comparisons are error-less. If either of the two comparisons happen to lead to wrong ranking, the third comparison will automatically end up as a wrong result as well. Hence, every distinct pair of items are compared to ensure that the chances of wrong ranking are minimum. 
+
+
+
+
+\subsection{Evaluation of Ranking}
+Suppose if we are given an ideal order, say ${{y}_{1}}>{{y}_{2}}>...>{{y}_{n}}$, we need the ranking to be $h({{x}_{1}})>h({{x}_{2}})>...>h({{x}_{n}})$ for maximum accuracy. To evaluate the actual accuracy, let us say that for every ${{y}_{i}}>{{y}_{j}}$,
+
+  & h({{x}_{i}})>h({{x}_{j}})\to +1 \\ 
+ & h({{x}_{i}})<h({{x}_{j}})\to 0 \\ 
+ & h({{x}_{i}})=h({{x}_{j}})\to \frac{1}{2} \\ 
+
+In this case, the accuracy of the ranking can be evaluated as
+	\[\sum\limits_{\begin{smallmatrix} 
+ i,j \\ 
+ {{y}_{i}}>{{y}_{j}} 
+\end{smallmatrix}}^{{}}{\left[ \Iota \Iota \left( h({{x}_{i}})>h({{x}_{j}}) \right)+\frac{1}{2}\Iota \Iota \left( h({{x}_{i}})=h({{x}_{j}}) \right) \right]}\]
+However, this type of evaluation is not used in platforms like Google or Amazon because it penalises every mistake in ranking equally, which should not be the case as accurate ranking of first few pages in search results should have higher priority than the ranking of later pages for better quality of search results.
+
+\subsection{Convexity of Ranking Pairwise Loss Function}
+For the simplest training models, $h(x)$ is a linear function. In such cases, loss functions are expected to be convex.
+It is easy to prove that the ranking pairwise loss function is convex. 
+We know that the general loss function \[{{\sum\limits_{i\in D}^{{}}{\left[ 1-\left( {{w}^{T}}{{x}_{i}} \right){{y}_{i}} \right]}}_{+}}\] is convex.
+An equivalent expression for the ranking pairwise loss function can be written as
+\[\begin{align}
+  & {{\sum\limits_{i,j\in D}^{{}}{\left[ 1-sign({{y}_{i}}-{{y}_{j}}){{w}^{T}}({{x}_{i}}-{{x}_{j}}) \right]}}_{+}} \\ 
+ & ={{\sum\limits_{i,j\in D}^{{}}{\left[ 1-{{y}_{ij}}\left( {{w}^{T}}{{x}_{ij}} \right) \right]}}_{+}} \\ 
+\end{align}\]
+Hence, the above function is also convex with respect to $w$.
+
+
+\section{Group Details and Individual Contribution}
+
+\begin{itemize}
+    \item Hiya Gada : Section 4.1.1 and 4.1.2
+    \item Akshay Iyer : Section 4.1.3 and 4.1.4
+    \item Divyansh Natani : Section 4.1.5 and 4.1.6
+    \item Harshit Kashyap : Section 4.1.7 and 4.1.8
+    \item Udita Mehta : Section 4.1.9
+\end{itemize}
+
+\end{document}
+
+
+
+
+
+
